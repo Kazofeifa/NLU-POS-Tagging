@@ -1,0 +1,16 @@
+
+name: nlu-pos
+
+channels:
+  - defaults
+
+dependencies:
+  - python=3.12
+  - pip
+  - pip:
+      - tensorflow==2.21.0
+      - numpy
+      - pandas
+      - matplotlib
+      - jupyterlab
+      - ipykernel

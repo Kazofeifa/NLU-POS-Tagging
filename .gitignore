@@ -1,0 +1,28 @@
+
+# Jupyter
+*.ipynb
+.ipynb_checkpoints/
+notebooks/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Entornos virtuales
+.venv/
+venv/
+.env
+
+# VS Code
+.vscode/
+
+# Modelos entrenados
+models/*.keras
+models/*.h5
+
+# Datos descargados
+data/raw/
+
+# Temporales
+*.log
