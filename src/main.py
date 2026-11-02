@@ -4,7 +4,7 @@ from validation import validate_data
 from model import build_lstm_model
 from train import train_model
 from evaluate import evaluate_model
-
+from confussion_matrix import generate_confusion_matrix, print_confusion_matrix, save_confusion_matrix
 
 
 # 1. Select dataset
@@ -67,13 +67,13 @@ print("Validation:", X_dev.shape, y_dev.shape)
 print("Test:", X_test.shape, y_test.shape)
 
 print("Vocabulary size:",
-      len(preprocessor.vectorizer.get_vocabulary()))
+      preprocessor.vectorizer.vocabulary_size())
 
 print("POS categories:", preprocessor.tag2id)
 
 
 #9. Models configuration
-vocab_size = len(preprocessor.vectorizer.get_vocabulary())
+vocab_size = preprocessor.vectorizer.vocabulary_size()
 num_tags = max(int(tag_id) for tag_id in preprocessor.tag2id.values()) + 1
 experiments = [
     {"name": "lstm", "bidirectional": False, "dropout": 0.0},
@@ -136,6 +136,23 @@ for experiment in experiments:
         "best_val_loss": min(history.history["val_loss"]),
         "model_path": model_path,
     }
+
+    matrix, tag_names = generate_confusion_matrix(
+        model=model,
+        X=X_dev,
+        y=y_dev,
+        weights=w_dev,
+        id2tag=preprocessor.id2tag,
+    )
+
+    print(f"\nDEVELOPMENT CONFUSION MATRIX: {name}")
+    print_confusion_matrix(matrix, tag_names)
+    matrix_path = save_confusion_matrix(
+        matrix=matrix,
+        tag_names=tag_names,
+        output_path=f"models/{dataset}_{name}_confusion_matrix.csv",
+    )
+    print(f"Saved matrix in: {matrix_path}")
 
 print("\n=== DEVELOPMENT RESULTS ===")
 for name, metrics in results.items():
