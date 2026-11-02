@@ -5,10 +5,11 @@ from model import build_lstm_model
 from train import train_model
 from evaluate import evaluate_model
 from confussion_matrix import generate_confusion_matrix, print_confusion_matrix, save_confusion_matrix
+from pre_save import save_preprocessing
 
 
 # 1. Select dataset
-dataset = "en_ewt"
+dataset = "gl_ctg"
 
 
 # 2. Load datasets
@@ -31,6 +32,10 @@ preprocessor = POSPreprocessor(max_tokens=20000)
 
 # 4. Learn vocabulary and POS tags
 preprocessor.fit(train_sentences, train_tags)
+save_preprocessing(
+    preprocessor,
+    save_dir=f"models/{dataset}/preprocessing"
+)
 
 
 # 5. Preprocess input sentences

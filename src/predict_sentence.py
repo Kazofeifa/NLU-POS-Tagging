@@ -10,13 +10,58 @@ from pre_save import load_preprocessing
 
 # Project paths
 BASE_DIR = Path(__file__).resolve().parent.parent
+MODELS_DIR = BASE_DIR / "models"
 
-DATASET = "en_ewt"
 
-MODEL_PATH = BASE_DIR / "models" / "en_ewt_bilstm.keras"
-PREPROCESSING_PATH = (
-    BASE_DIR / "models" / DATASET / "preprocessing"
-)
+def get_available_datasets():
+    """
+    Find available datasets from saved BiLSTM models.
+    """
+    datasets = {}
+
+    for model_path in sorted(MODELS_DIR.glob("*_bilstm_dropout.keras")):
+        dataset = model_path.name.removesuffix("_bilstm_dropout.keras")
+
+        preprocessing_path = (
+            MODELS_DIR / dataset / "preprocessing"
+        )
+
+        required_files = [
+            "vocabulary.json",
+            "tags.json",
+            "vectorizer_config.json"
+        ]
+
+        if all(
+            (preprocessing_path / filename).exists()
+            for filename in required_files
+        ):
+            datasets[dataset] = model_path
+
+    return datasets
+
+
+def select_dataset(datasets):
+    """
+    Let the user select a dataset.
+    """
+    names = list(datasets.keys())
+
+    print("\n=== SELECT LANGUAGE ===")
+
+    for i, name in enumerate(names, start=1):
+        print(f"{i}. {name}")
+
+    while True:
+        choice = input("\nChoose an option: ").strip()
+
+        if choice.isdigit():
+            index = int(choice) - 1
+
+            if 0 <= index < len(names):
+                return names[index]
+
+        print("Invalid option. Try again.")
 
 
 def tokenize_sentence(sentence):
@@ -32,13 +77,29 @@ def tokenize_sentence(sentence):
 def main():
     print("\n=== POS TAGGING ===")
 
-    # Load model and preprocessing
-    print("Loading model...")
+    # Discover available datasets
+    datasets = get_available_datasets()
 
-    model = tf.keras.models.load_model(MODEL_PATH)
+    if not datasets:
+        print("No complete saved models were found.")
+        print(f"Check directory: {MODELS_DIR}")
+        return
+
+    # Select language
+    dataset = select_dataset(datasets)
+
+    model_path = datasets[dataset]
+    preprocessing_path = (
+        MODELS_DIR / dataset / "preprocessing"
+    )
+
+    # Load model
+    print(f"\nLoading model: {model_path.name}")
+
+    model = tf.keras.models.load_model(model_path)
 
     vectorizer, tag2id, id2tag = load_preprocessing(
-        PREPROCESSING_PATH
+        preprocessing_path
     )
 
     print("Model loaded successfully!")
@@ -56,10 +117,8 @@ def main():
             print("Please enter a sentence.")
             continue
 
-        # Tokenize sentence
         tokens = tokenize_sentence(sentence)
 
-        # Predict POS tags
         try:
             predictions = predict_pos(
                 model=model,
@@ -67,11 +126,11 @@ def main():
                 vectorizer=vectorizer,
                 id2tag=id2tag
             )
-        except ValueError as error:
+
+        except (ValueError, KeyError) as error:
             print(f"Prediction error: {error}")
             continue
 
-        # Display results
         print("\nWORD            POS TAG")
         print("-" * 25)
 
